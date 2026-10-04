@@ -21,7 +21,12 @@ async function loadPapers() {
   try {
     const response = await fetch(GOOGLE_SHEETS_API);
     if (!response.ok) throw new Error("Google Sheets request failed");
+
     const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error(data.error || "Unexpected Google Sheets response");
+    }
 
     state.papers = data.map(row => ({
       author: row["Author(s)"] ?? "",
@@ -30,32 +35,44 @@ async function loadPapers() {
       journal: row["Journal/Book"] ?? "",
       link: row["DOI/Link"] ?? "",
       stream: row["Literature stream"] ?? "",
+      subtopic: row["Sub-topic"] ?? "",
       read: normalizeReadStatus(row["Read?"])
     }));
 
     populateStreams();
-    loadPapers();
+    render();
   } catch (error) {
-    console.error(error);
+    console.error("Paper loading error:", error);
     const table = $("papers-table");
     if (table) {
-      table.innerHTML = `<tr><td colspan="6" class="empty">Could not load the Google Sheet. Check the Apps Script deployment and access settings.</td></tr>`;
+      table.innerHTML = `<tr><td colspan="6" class="empty">
+        Could not load the Google Sheet: ${esc(error.message)}
+      </td></tr>`;
     }
   }
 }
 
 function normalizeReadStatus(value) {
   const v = String(value ?? "").trim().toLowerCase();
+
   if (v === "read") return "Read";
   if (v === "reading") return "Reading";
+
+  // Blank or anything else is treated as unread.
   return "Unread";
 }
 
 function populateStreams() {
   const select = $("paper-stream");
-  const streams = [...new Set(state.papers.map(p => p.stream).filter(Boolean))].sort();
-  select.innerHTML = '<option value="">All literature streams</option>' +
-    streams.map(s => `<option value="${escAttr(s)}">${esc(s)}</option>`).join("");
+  const streams = [...new Set(
+    state.papers.map(p => p.stream).filter(Boolean)
+  )].sort();
+
+  select.innerHTML =
+    '<option value="">All literature streams</option>' +
+    streams.map(s =>
+      `<option value="${escAttr(s)}">${esc(s)}</option>`
+    ).join("");
 }
 
 function render() {
@@ -77,10 +94,13 @@ function renderPapers() {
   );
   $("papers-table").innerHTML = rows.length ? rows.map(p => `
     <tr>
-      <td>${esc(p.author)}</td><td>${esc(p.year)}</td>
-      <td><a href="${escAttr(p.link || "#")}" target="_blank">${esc(p.title)}</a></td>
-      <td>${esc(p.journal)}</td><td>${esc(p.stream)}</td><td>${esc(p.read)}</td>
-    </tr>`).join("") : `<tr><td colspan="6" class="empty">No papers loaded yet.</td></tr>`;
+      <td>${esc(p.author)}</td>
+      <td>${esc(p.year)}</td>
+      <td>${p.link ? `<a href="${escAttr(p.link)}" target="_blank" rel="noopener">${esc(p.title)}</a>` : esc(p.title)}</td>
+      <td>${esc(p.journal)}</td>
+      <td>${esc(p.stream)}</td>
+      <td>${esc(p.read)}</td>
+    </tr>`).join("") : `<tr><td colspan="6" class="empty">No papers found.</td></tr>`;
   $("total-papers").textContent = state.papers.length || "0";
   $("unread-papers").textContent = state.papers.filter(p=>p.read==="Unread").length;
   $("reading-papers").textContent = state.papers.filter(p=>p.read==="Reading").length;
