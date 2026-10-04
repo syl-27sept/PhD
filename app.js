@@ -1,6 +1,8 @@
 // Silvia PhD - first architecture prototype.
 // Data adapters will be connected to Supabase and Google Sheets in the next step.
 
+const GOOGLE_SHEETS_API = "https://script.google.com/macros/s/AKfycbzrX9ILnV2CAUEywzkYn4iNASyx9XGfwbVSjg1CYuq9ennyf2XcbO9_j1Uc0gJDDumPZA/exec";
+
 const state = {
   papers: [],
   tasks: JSON.parse(localStorage.getItem("silvia-phd-tasks") || "[]"),
@@ -14,6 +16,47 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+
+async function loadPapers() {
+  try {
+    const response = await fetch(GOOGLE_SHEETS_API);
+    if (!response.ok) throw new Error("Google Sheets request failed");
+    const data = await response.json();
+
+    state.papers = data.map(row => ({
+      author: row["Author(s)"] ?? "",
+      year: row["Year"] ?? "",
+      title: row["Title"] ?? "",
+      journal: row["Journal/Book"] ?? "",
+      link: row["DOI/Link"] ?? "",
+      stream: row["Literature stream"] ?? "",
+      read: normalizeReadStatus(row["Read?"])
+    }));
+
+    populateStreams();
+    loadPapers();
+  } catch (error) {
+    console.error(error);
+    const table = $("papers-table");
+    if (table) {
+      table.innerHTML = `<tr><td colspan="6" class="empty">Could not load the Google Sheet. Check the Apps Script deployment and access settings.</td></tr>`;
+    }
+  }
+}
+
+function normalizeReadStatus(value) {
+  const v = String(value ?? "").trim().toLowerCase();
+  if (v === "read") return "Read";
+  if (v === "reading") return "Reading";
+  return "Unread";
+}
+
+function populateStreams() {
+  const select = $("paper-stream");
+  const streams = [...new Set(state.papers.map(p => p.stream).filter(Boolean))].sort();
+  select.innerHTML = '<option value="">All literature streams</option>' +
+    streams.map(s => `<option value="${escAttr(s)}">${esc(s)}</option>`).join("");
+}
 
 function render() {
   renderPapers();
@@ -75,7 +118,7 @@ $("task-form").addEventListener("submit", e => {
   const data = Object.fromEntries(new FormData(e.target));
   state.tasks.push({...data, done:false});
   localStorage.setItem("silvia-phd-tasks", JSON.stringify(state.tasks));
-  e.target.reset(); $("task-dialog").close(); render();
+  e.target.reset(); $("task-dialog").close(); loadPapers();
 });
 
 ["add-task","add-task-2"].forEach(id=>$(id).addEventListener("click",addTask));
@@ -93,4 +136,4 @@ document.querySelectorAll(".sidebar a").forEach(a=>a.addEventListener("click",()
 function esc(v){return String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function escAttr(v){return esc(v)}
 
-render();
+loadPapers();
