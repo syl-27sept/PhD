@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Silvia PhD</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">Silvia PhD</div>
+    <nav>
+      <a class="active" href="#dashboard">Dashboard</a>
+      <a href="#papers">Papers</a>
+      <a href="#tasks">Tasks</a>
+      <a href="#meetings">Supervisor Meetings</a>
+      <a href="#roadmap">First-Year Roadmap</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PhD · Year 1</p>
+        <h1 id="page-title">Dashboard</h1>
+      </div>
+      <div class="actions">
+        <button id="add-task" class="button secondary">+ Add Task</button>
+      </div>
+    </header>
+
+    <section id="dashboard" class="page">
+      <div class="stats-grid">
+        <article class="stat"><span>Total papers</span><strong id="total-papers">—</strong></article>
+        <article class="stat"><span>Unread papers</span><strong id="unread-papers">—</strong></article>
+        <article class="stat"><span>Currently reading</span><strong id="reading-papers">—</strong></article>
+        <article class="stat"><span>Tasks due soon</span><strong id="due-soon">—</strong></article>
+      </div>
+
+      <div class="grid two">
+        <article class="card">
+          <div class="card-head"><h2>First-year progress</h2><span id="roadmap-percent">0%</span></div>
+          <div class="progress"><div id="roadmap-bar"></div></div>
+          <p class="muted">Roadmap progress will be calculated from completed milestones.</p>
+        </article>
+        <article class="card">
+          <div class="card-head"><h2>Upcoming supervisor meeting</h2></div>
+          <div id="next-meeting" class="empty">No meetings added yet.</div>
+        </article>
+      </div>
+
+      <div class="grid two">
+        <article class="card">
+          <div class="card-head"><h2>Tasks due soon</h2><a href="#tasks">View all</a></div>
+          <div id="dashboard-tasks" class="list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><h2>Recent activity</h2></div>
+          <div id="activity" class="list"><div class="empty">Activity will appear here.</div></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="papers" class="page hidden">
+      <div class="section-tools">
+        <input id="paper-search" type="search" placeholder="Search papers...">
+        <select id="paper-status">
+          <option value="">All statuses</option>
+          <option value="Unread">Unread</option>
+          <option value="Reading">Reading</option>
+          <option value="Read">Read</option>
+        </select>
+        <select id="paper-stream"><option value="">All literature streams</option></select>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Papers</h2><a id="sheet-link" href="#" target="_blank">Open Google Sheet ↗</a></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Author(s)</th><th>Year</th><th>Title</th><th>Journal/Book</th><th>Literature stream</th><th>Read?</th></tr></thead>
+            <tbody id="papers-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="tasks" class="page hidden">
+      <div class="card">
+        <div class="card-head"><h2>Tasks</h2><button class="button" id="add-task-2">+ Add Task</button></div>
+        <div id="tasks-list" class="list"></div>
+      </div>
+    </section>
+
+    <section id="meetings" class="page hidden">
+      <div class="card">
+        <div class="card-head"><h2>Supervisor Meetings</h2><button class="button" id="add-meeting">+ Add Meeting</button></div>
+        <div id="meetings-list" class="list"></div>
+      </div>
+    </section>
+
+    <section id="roadmap" class="page hidden">
+      <div class="card">
+        <div class="card-head"><h2>First-Year Roadmap</h2></div>
+        <div id="roadmap-list" class="list"></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="task-dialog">
+    <form method="dialog" id="task-form">
+      <h2>Add task</h2>
+      <label>Task name<input name="name" required></label>
+      <label>Description<textarea name="description"></textarea></label>
+      <label>Due date<input name="due_date" type="date"></label>
+      <div class="dialog-actions"><button value="cancel" class="button secondary">Cancel</button><button value="default" class="button">Save</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
