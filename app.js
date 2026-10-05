@@ -1,3 +1,4 @@
+```javascript
 const GOOGLE_SHEETS_API =
   "https://script.google.com/macros/s/AKfycbzrX9ILnV2CAUEywzkYn4iNASyx9XGfwbVSjg1CYuq9ennyf2XcbO9_j1Uc0gJDDumPZA/exec";
 
@@ -51,6 +52,7 @@ async function loadPapers() {
 
     populateStreams();
     render();
+
   } catch (error) {
     console.error("Paper loading error:", error);
 
@@ -81,6 +83,8 @@ function normalizeReadStatus(value) {
 
 function populateStreams() {
   const select = $("paper-stream");
+
+  if (!select) return;
 
   const streams = [
     ...new Set(
@@ -121,11 +125,15 @@ async function loadTasks() {
   } catch (error) {
     console.error("Task loading error:", error);
 
-    $("tasks-list").innerHTML = `
-      <div class="empty">
-        Could not load tasks from Supabase.
-      </div>
-    `;
+    const list = $("tasks-list");
+
+    if (list) {
+      list.innerHTML = `
+        <div class="empty">
+          Could not load tasks from Supabase.
+        </div>
+      `;
+    }
   }
 }
 
@@ -134,11 +142,9 @@ async function createTask(task) {
   try {
     const response = await fetch(SUPABASE_TASKS_API, {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
       body: JSON.stringify(task)
     });
 
@@ -277,54 +283,66 @@ function renderPapers() {
       ? rows
           .map(
             p => `
-            <tr>
-              <td>${esc(p.author)}</td>
-              <td>${esc(p.year)}</td>
+              <tr>
+                <td>${esc(p.author)}</td>
+                <td>${esc(p.year)}</td>
 
-              <td>
-                ${
-                  p.link
-                    ? `<a href="${escAttr(
-                        p.link
-                      )}" target="_blank" rel="noopener">
-                        ${esc(p.title)}
-                       </a>`
-                    : esc(p.title)
-                }
-              </td>
+                <td>
+                  ${
+                    p.link
+                      ? `<a href="${escAttr(
+                          p.link
+                        )}" target="_blank" rel="noopener">
+                          ${esc(p.title)}
+                         </a>`
+                      : esc(p.title)
+                  }
+                </td>
 
-              <td>${esc(p.journal)}</td>
-              <td>${esc(p.stream)}</td>
-              <td>${esc(p.read)}</td>
-            </tr>
-          `
+                <td>${esc(p.journal)}</td>
+                <td>${esc(p.stream)}</td>
+                <td>${esc(p.read)}</td>
+              </tr>
+            `
           )
           .join("")
       : `
-        <tr>
-          <td colspan="6" class="empty">
-            No papers found.
-          </td>
-        </tr>
-      `;
+          <tr>
+            <td colspan="6" class="empty">
+              No papers found.
+            </td>
+          </tr>
+        `;
 
-  $("total-papers").textContent =
-    state.papers.length;
+  if ($("total-papers")) {
+    $("total-papers").textContent =
+      state.papers.length;
+  }
 
-  $("unread-papers").textContent =
-    state.papers.filter(
-      p => p.read === "Unread"
-    ).length;
+  if ($("unread-papers")) {
+    $("unread-papers").textContent =
+      state.papers.filter(
+        p => p.read === "Unread"
+      ).length;
+  }
 
-  $("reading-papers").textContent =
-    state.papers.filter(
-      p => p.read === "Reading"
-    ).length;
+  if ($("reading-papers")) {
+    $("reading-papers").textContent =
+      state.papers.filter(
+        p => p.read === "Reading"
+      ).length;
+  }
 }
 
 
+/* =========================
+   TASK DISPLAY
+========================= */
+
 function renderTasks() {
   const list = $("tasks-list");
+
+  if (!list) return;
 
   if (!state.tasks.length) {
     list.innerHTML = `
@@ -334,8 +352,16 @@ function renderTasks() {
     `;
   } else {
     list.innerHTML = state.tasks
-      .map(
-        task => `
+      .map(task => {
+
+        const statusLabel =
+          task.status === "done"
+            ? "Done"
+            : task.status === "in_progress"
+            ? "In progress"
+            : "To do";
+
+        return `
           <div class="list-item">
 
             <div>
@@ -345,9 +371,11 @@ function renderTasks() {
 
               ${
                 task.description
-                  ? `<div class="muted">
+                  ? `
+                    <div class="muted">
                       ${esc(task.description)}
-                     </div>`
+                    </div>
+                  `
                   : ""
               }
 
@@ -357,65 +385,105 @@ function renderTasks() {
                     ? `Due: ${esc(task.due_date)}`
                     : "No due date"
                 }
-
                 ·
-
-                ${
-                  task.status === "done"
-                    ? "Done"
-                    : task.status === "in_progress"
-                    ? "In progress"
-                    : "To do"
-                }
+                ${statusLabel}
               </div>
             </div>
 
-            <div style="margin-top:10px;display:flex;gap:8px;">
+            <div
+              style="
+                margin-top:10px;
+                display:flex;
+                gap:8px;
+                flex-wrap:wrap;
+              "
+            >
 
-              ${
-                task.status !== "done"
-                  ? `
-                    <button
-                      class="button secondary"
-                      onclick="completeTask('${task.id}')">
-                      Mark done
-                    </button>
-                  `
-                  : `
-                    <button
-                      class="button secondary"
-                      onclick="reopenTask('${task.id}')">
-                      Reopen
-                    </button>
-                  `
-              }
+              <select
+                onchange="changeTaskStatus('${task.id}', this.value)"
+              >
+                <option
+                  value="todo"
+                  ${task.status === "todo" ? "selected" : ""}
+                >
+                  To do
+                </option>
+
+                <option
+                  value="in_progress"
+                  ${task.status === "in_progress" ? "selected" : ""}
+                >
+                  In progress
+                </option>
+
+                <option
+                  value="done"
+                  ${task.status === "done" ? "selected" : ""}
+                >
+                  Done
+                </option>
+              </select>
 
               <button
                 class="button secondary"
-                onclick="deleteTask('${task.id}')">
+                onclick="editTask('${task.id}')"
+              >
+                Edit
+              </button>
+
+              <button
+                class="button secondary"
+                onclick="deleteTask('${task.id}')"
+              >
                 Delete
               </button>
 
             </div>
 
           </div>
-        `
-      )
+        `;
+      })
       .join("");
   }
 
+  renderDashboardTasks();
+}
+
+
+function renderDashboardTasks() {
+  const dashboard =
+    $("dashboard-tasks");
+
+  if (!dashboard) return;
+
   const unfinishedTasks =
     state.tasks
-      .filter(task => !task.done && task.status !== "done")
+      .filter(
+        task =>
+          task.status !== "done"
+      )
+      .sort((a, b) => {
+
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+
+        return (
+          new Date(a.due_date) -
+          new Date(b.due_date)
+        );
+      })
       .slice(0, 5);
 
-  $("dashboard-tasks").innerHTML =
+  dashboard.innerHTML =
     unfinishedTasks.length
       ? unfinishedTasks
           .map(
             task => `
               <div class="list-item">
-                <strong>${esc(task.title)}</strong>
+
+                <strong>
+                  ${esc(task.title)}
+                </strong>
 
                 <div class="muted">
                   ${
@@ -424,28 +492,81 @@ function renderTasks() {
                       : "No due date"
                   }
                 </div>
+
               </div>
             `
           )
           .join("")
       : `
-        <div class="empty">
-          No tasks due.
-        </div>
-      `;
+          <div class="empty">
+            No outstanding tasks.
+          </div>
+        `;
 }
 
 
-async function completeTask(taskId) {
+/* =========================
+   TASK STATUS
+========================= */
+
+async function changeTaskStatus(
+  taskId,
+  status
+) {
   await updateTask(taskId, {
-    status: "done"
+    status
   });
 }
 
 
-async function reopenTask(taskId) {
+/* =========================
+   EDIT TASK
+========================= */
+
+async function editTask(taskId) {
+  const task =
+    state.tasks.find(
+      item => item.id === taskId
+    );
+
+  if (!task) return;
+
+  const title =
+    prompt(
+      "Task title:",
+      task.title
+    );
+
+  if (title === null) {
+    return;
+  }
+
+  const description =
+    prompt(
+      "Description:",
+      task.description || ""
+    );
+
+  if (description === null) {
+    return;
+  }
+
+  const dueDate =
+    prompt(
+      "Due date (YYYY-MM-DD), or leave blank:",
+      task.due_date || ""
+    );
+
+  if (dueDate === null) {
+    return;
+  }
+
   await updateTask(taskId, {
-    status: "todo"
+    title: title.trim(),
+    description:
+      description.trim() || null,
+    due_date:
+      dueDate.trim() || null
   });
 }
 
@@ -455,43 +576,68 @@ async function reopenTask(taskId) {
 ========================= */
 
 function addTask() {
-  $("task-dialog").showModal();
+  const dialog =
+    $("task-dialog");
+
+  if (dialog) {
+    dialog.showModal();
+  }
 }
 
 
-$("task-form").addEventListener(
-  "submit",
-  async event => {
-    event.preventDefault();
+const taskForm =
+  $("task-form");
 
-    const formData =
-      Object.fromEntries(
-        new FormData(event.target)
-      );
+if (taskForm) {
+  taskForm.addEventListener(
+    "submit",
+    async event => {
 
-    await createTask({
-      title: formData.name,
-      description: formData.description || null,
-      due_date: formData.due_date || null,
-      status: "todo"
-    });
+      event.preventDefault();
 
-    event.target.reset();
+      const formData =
+        Object.fromEntries(
+          new FormData(event.target)
+        );
 
-    $("task-dialog").close();
-  }
-);
+      await createTask({
+        title:
+          formData.name?.trim() ||
+          "Untitled task",
+
+        description:
+          formData.description?.trim() ||
+          null,
+
+        due_date:
+          formData.due_date ||
+          null,
+
+        status: "todo"
+      });
+
+      event.target.reset();
+
+      $("task-dialog").close();
+    }
+  );
+}
 
 
-$("add-task").addEventListener(
-  "click",
-  addTask
-);
+if ($("add-task")) {
+  $("add-task").addEventListener(
+    "click",
+    addTask
+  );
+}
 
-$("add-task-2").addEventListener(
-  "click",
-  addTask
-);
+
+if ($("add-task-2")) {
+  $("add-task-2").addEventListener(
+    "click",
+    addTask
+  );
+}
 
 
 /* =========================
@@ -499,6 +645,11 @@ $("add-task-2").addEventListener(
 ========================= */
 
 function renderMeetings() {
+  const list =
+    $("meetings-list");
+
+  if (!list) return;
+
   const sorted =
     [...state.meetings].sort(
       (a, b) =>
@@ -506,16 +657,17 @@ function renderMeetings() {
         new Date(b.date)
     );
 
-  $("meetings-list").innerHTML =
+  list.innerHTML =
     sorted.length
       ? sorted
           .map(
             meeting => `
               <div class="list-item">
+
                 <strong>
                   ${esc(
                     meeting.title ||
-                      "Supervisor meeting"
+                    "Supervisor meeting"
                   )}
                 </strong>
 
@@ -530,15 +682,16 @@ function renderMeetings() {
                     meeting.notes || ""
                   )}
                 </div>
+
               </div>
             `
           )
           .join("")
       : `
-        <div class="empty">
-          No meetings yet.
-        </div>
-      `;
+          <div class="empty">
+            No meetings yet.
+          </div>
+        `;
 
   const next =
     sorted.find(
@@ -548,21 +701,23 @@ function renderMeetings() {
           new Date()
     );
 
-  $("next-meeting").innerHTML =
-    next
-      ? `
-        <strong>
-          ${esc(
-            next.title ||
-              "Supervisor meeting"
-          )}
-        </strong>
+  if ($("next-meeting")) {
+    $("next-meeting").innerHTML =
+      next
+        ? `
+            <strong>
+              ${esc(
+                next.title ||
+                "Supervisor meeting"
+              )}
+            </strong>
 
-        <div class="muted">
-          ${esc(next.date)}
-        </div>
-      `
-      : "No upcoming meeting.";
+            <div class="muted">
+              ${esc(next.date)}
+            </div>
+          `
+        : "No upcoming meeting.";
+  }
 }
 
 
@@ -571,7 +726,12 @@ function renderMeetings() {
 ========================= */
 
 function renderRoadmap() {
-  $("roadmap-list").innerHTML =
+  const list =
+    $("roadmap-list");
+
+  if (!list) return;
+
+  list.innerHTML =
     state.roadmap
       .map(
         item => `
@@ -589,8 +749,8 @@ function renderRoadmap() {
 
             <div class="progress">
               <div
-                style="width:${item.progress}%">
-              </div>
+                style="width:${item.progress}%"
+              ></div>
             </div>
 
           </div>
@@ -603,18 +763,23 @@ function renderRoadmap() {
       ? Math.round(
           state.roadmap.reduce(
             (total, item) =>
-              total + item.progress,
+              total +
+              item.progress,
             0
           ) /
             state.roadmap.length
         )
       : 0;
 
-  $("roadmap-percent").textContent =
-    average + "%";
+  if ($("roadmap-percent")) {
+    $("roadmap-percent").textContent =
+      average + "%";
+  }
 
-  $("roadmap-bar").style.width =
-    average + "%";
+  if ($("roadmap-bar")) {
+    $("roadmap-bar").style.width =
+      average + "%";
+  }
 }
 
 
@@ -623,7 +788,8 @@ function renderRoadmap() {
 ========================= */
 
 function updateDashboard() {
-  const now = new Date();
+  const now =
+    new Date();
 
   const sevenDays =
     new Date(now);
@@ -634,6 +800,7 @@ function updateDashboard() {
 
   const dueSoon =
     state.tasks.filter(task => {
+
       if (
         !task.due_date ||
         task.status === "done"
@@ -642,13 +809,43 @@ function updateDashboard() {
       }
 
       const date =
-        new Date(task.due_date);
+        new Date(
+          task.due_date +
+          "T23:59:59"
+        );
 
-      return date <= sevenDays;
+      return date <=
+        sevenDays;
     });
 
-  $("due-soon").textContent =
-    dueSoon.length;
+  const overdue =
+    state.tasks.filter(task => {
+
+      if (
+        !task.due_date ||
+        task.status === "done"
+      ) {
+        return false;
+      }
+
+      const date =
+        new Date(
+          task.due_date +
+          "T23:59:59"
+        );
+
+      return date < now;
+    });
+
+  if ($("due-soon")) {
+    $("due-soon").textContent =
+      dueSoon.length;
+  }
+
+  if ($("overdue-tasks")) {
+    $("overdue-tasks").textContent =
+      overdue.length;
+  }
 }
 
 
@@ -659,13 +856,23 @@ function updateDashboard() {
 document
   .querySelectorAll(".sidebar a")
   .forEach(link => {
+
     link.addEventListener(
       "click",
       () => {
+
+        const href =
+          link.getAttribute("href");
+
+        if (
+          !href ||
+          !href.startsWith("#")
+        ) {
+          return;
+        }
+
         const target =
-          link
-            .getAttribute("href")
-            .slice(1);
+          href.slice(1);
 
         document
           .querySelectorAll(".page")
@@ -675,35 +882,48 @@ document
             )
           );
 
-        $(target).classList.remove(
-          "hidden"
-        );
+        const targetPage =
+          $(target);
 
-        $("page-title").textContent =
-          link.textContent;
+        if (targetPage) {
+          targetPage.classList.remove(
+            "hidden"
+          );
+        }
+
+        if ($("page-title")) {
+          $("page-title").textContent =
+            link.textContent.trim();
+        }
       }
     );
   });
 
 
 /* =========================
-   PAPER SEARCH / FILTERS
+   PAPER FILTERS
 ========================= */
 
-$("paper-search").addEventListener(
-  "input",
-  renderPapers
-);
+if ($("paper-search")) {
+  $("paper-search").addEventListener(
+    "input",
+    renderPapers
+  );
+}
 
-$("paper-status").addEventListener(
-  "change",
-  renderPapers
-);
+if ($("paper-status")) {
+  $("paper-status").addEventListener(
+    "change",
+    renderPapers
+  );
+}
 
-$("paper-stream").addEventListener(
-  "change",
-  renderPapers
-);
+if ($("paper-stream")) {
+  $("paper-stream").addEventListener(
+    "change",
+    renderPapers
+  );
+}
 
 
 /* =========================
@@ -745,3 +965,4 @@ loadPapers();
 loadTasks();
 renderMeetings();
 renderRoadmap();
+```
