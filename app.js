@@ -1,4 +1,3 @@
-```javascript
 const GOOGLE_SHEETS_API =
   "https://script.google.com/macros/s/AKfycbzrX9ILnV2CAUEywzkYn4iNASyx9XGfwbVSjg1CYuq9ennyf2XcbO9_j1Uc0gJDDumPZA/exec";
 
@@ -36,7 +35,7 @@ async function loadPapers() {
     const data = await response.json();
 
     if (!Array.isArray(data)) {
-      throw new Error(data.error || "Unexpected Google Sheets response");
+      throw new Error("Unexpected Google Sheets response");
     }
 
     state.papers = data.map(row => ({
@@ -51,7 +50,7 @@ async function loadPapers() {
     }));
 
     populateStreams();
-    render();
+    renderPapers();
 
   } catch (error) {
     console.error("Paper loading error:", error);
@@ -142,9 +141,11 @@ async function createTask(task) {
   try {
     const response = await fetch(SUPABASE_TASKS_API, {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json"
       },
+
       body: JSON.stringify(task)
     });
 
@@ -247,17 +248,8 @@ async function deleteTask(taskId) {
 
 
 /* =========================
-   RENDERING
+   PAPERS
 ========================= */
-
-function render() {
-  renderPapers();
-  renderTasks();
-  renderMeetings();
-  renderRoadmap();
-  updateDashboard();
-}
-
 
 function renderPapers() {
   const q =
@@ -294,7 +286,7 @@ function renderPapers() {
                           p.link
                         )}" target="_blank" rel="noopener">
                           ${esc(p.title)}
-                         </a>`
+                        </a>`
                       : esc(p.title)
                   }
                 </td>
@@ -336,7 +328,7 @@ function renderPapers() {
 
 
 /* =========================
-   TASK DISPLAY
+   TASKS
 ========================= */
 
 function renderTasks() {
@@ -354,12 +346,8 @@ function renderTasks() {
     list.innerHTML = state.tasks
       .map(task => {
 
-        const statusLabel =
-          task.status === "done"
-            ? "Done"
-            : task.status === "in_progress"
-            ? "In progress"
-            : "To do";
+        const status =
+          task.status || "todo";
 
         return `
           <div class="list-item">
@@ -385,8 +373,6 @@ function renderTasks() {
                     ? `Due: ${esc(task.due_date)}`
                     : "No due date"
                 }
-                ·
-                ${statusLabel}
               </div>
             </div>
 
@@ -404,21 +390,21 @@ function renderTasks() {
               >
                 <option
                   value="todo"
-                  ${task.status === "todo" ? "selected" : ""}
+                  ${status === "todo" ? "selected" : ""}
                 >
                   To do
                 </option>
 
                 <option
                   value="in_progress"
-                  ${task.status === "in_progress" ? "selected" : ""}
+                  ${status === "in_progress" ? "selected" : ""}
                 >
                   In progress
                 </option>
 
                 <option
                   value="done"
-                  ${task.status === "done" ? "selected" : ""}
+                  ${status === "done" ? "selected" : ""}
                 >
                   Done
                 </option>
@@ -456,11 +442,11 @@ function renderDashboardTasks() {
 
   if (!dashboard) return;
 
-  const unfinishedTasks =
+  const unfinished =
     state.tasks
       .filter(
         task =>
-          task.status !== "done"
+          (task.status || "todo") !== "done"
       )
       .sort((a, b) => {
 
@@ -475,12 +461,11 @@ function renderDashboardTasks() {
       .slice(0, 5);
 
   dashboard.innerHTML =
-    unfinishedTasks.length
-      ? unfinishedTasks
+    unfinished.length
+      ? unfinished
           .map(
             task => `
               <div class="list-item">
-
                 <strong>
                   ${esc(task.title)}
                 </strong>
@@ -492,7 +477,6 @@ function renderDashboardTasks() {
                       : "No due date"
                   }
                 </div>
-
               </div>
             `
           )
@@ -505,23 +489,12 @@ function renderDashboardTasks() {
 }
 
 
-/* =========================
-   TASK STATUS
-========================= */
-
-async function changeTaskStatus(
-  taskId,
-  status
-) {
+async function changeTaskStatus(taskId, status) {
   await updateTask(taskId, {
-    status
+    status: status
   });
 }
 
-
-/* =========================
-   EDIT TASK
-========================= */
 
 async function editTask(taskId) {
   const task =
@@ -531,42 +504,31 @@ async function editTask(taskId) {
 
   if (!task) return;
 
-  const title =
-    prompt(
-      "Task title:",
-      task.title
-    );
+  const title = prompt(
+    "Task title:",
+    task.title || ""
+  );
 
-  if (title === null) {
-    return;
-  }
+  if (title === null) return;
 
-  const description =
-    prompt(
-      "Description:",
-      task.description || ""
-    );
+  const description = prompt(
+    "Description:",
+    task.description || ""
+  );
 
-  if (description === null) {
-    return;
-  }
+  if (description === null) return;
 
-  const dueDate =
-    prompt(
-      "Due date (YYYY-MM-DD), or leave blank:",
-      task.due_date || ""
-    );
+  const dueDate = prompt(
+    "Due date (YYYY-MM-DD), or leave blank:",
+    task.due_date || ""
+  );
 
-  if (dueDate === null) {
-    return;
-  }
+  if (dueDate === null) return;
 
   await updateTask(taskId, {
     title: title.trim(),
-    description:
-      description.trim() || null,
-    due_date:
-      dueDate.trim() || null
+    description: description.trim() || null,
+    due_date: dueDate.trim() || null
   });
 }
 
@@ -576,8 +538,7 @@ async function editTask(taskId) {
 ========================= */
 
 function addTask() {
-  const dialog =
-    $("task-dialog");
+  const dialog = $("task-dialog");
 
   if (dialog) {
     dialog.showModal();
@@ -585,8 +546,7 @@ function addTask() {
 }
 
 
-const taskForm =
-  $("task-form");
+const taskForm = $("task-form");
 
 if (taskForm) {
   taskForm.addEventListener(
@@ -763,8 +723,7 @@ function renderRoadmap() {
       ? Math.round(
           state.roadmap.reduce(
             (total, item) =>
-              total +
-              item.progress,
+              total + item.progress,
             0
           ) /
             state.roadmap.length
@@ -788,8 +747,7 @@ function renderRoadmap() {
 ========================= */
 
 function updateDashboard() {
-  const now =
-    new Date();
+  const now = new Date();
 
   const sevenDays =
     new Date(now);
@@ -803,19 +761,18 @@ function updateDashboard() {
 
       if (
         !task.due_date ||
-        task.status === "done"
+        (task.status || "todo") === "done"
       ) {
         return false;
       }
 
       const date =
         new Date(
-          task.due_date +
-          "T23:59:59"
+          task.due_date + "T23:59:59"
         );
 
-      return date <=
-        sevenDays;
+      return date >= now &&
+        date <= sevenDays;
     });
 
   const overdue =
@@ -823,15 +780,14 @@ function updateDashboard() {
 
       if (
         !task.due_date ||
-        task.status === "done"
+        (task.status || "todo") === "done"
       ) {
         return false;
       }
 
       const date =
         new Date(
-          task.due_date +
-          "T23:59:59"
+          task.due_date + "T23:59:59"
         );
 
       return date < now;
@@ -877,9 +833,7 @@ document
         document
           .querySelectorAll(".page")
           .forEach(page =>
-            page.classList.add(
-              "hidden"
-            )
+            page.classList.add("hidden")
           );
 
         const targetPage =
@@ -965,4 +919,3 @@ loadPapers();
 loadTasks();
 renderMeetings();
 renderRoadmap();
-```
