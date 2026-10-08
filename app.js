@@ -1,22 +1,180 @@
+```javascript
 const GOOGLE_SHEETS_API =
   "https://script.google.com/macros/s/AKfycbzrX9ILnV2CAUEywzkYn4iNASyx9XGfwbVSjg1CYuq9ennyf2XcbO9_j1Uc0gJDDumPZA/exec";
 
 const SUPABASE_TASKS_API =
   "https://ouspoawbetddlhojskxz.supabase.co/functions/v1/tasks";
 
+
+/* =========================
+   APPLICATION STATE
+========================= */
+
 const state = {
   papers: [],
+
   tasks: [],
+
   meetings: JSON.parse(
     localStorage.getItem("silvia-phd-meetings") || "[]"
   ),
 
-  roadmap: [
-    { id: 1, name: "Literature review", progress: 0 },
-    { id: 2, name: "Research direction", progress: 0 },
-    { id: 3, name: "Methodology", progress: 0 },
-    { id: 4, name: "First-year writing / proposal", progress: 0 }
-  ]
+  roadmap: JSON.parse(
+    localStorage.getItem("silvia-phd-roadmap") ||
+      JSON.stringify([
+        {
+          id: 1,
+          year: "Year 1",
+          title: "Foundation & Exploration",
+          milestones: [
+            {
+              id: 101,
+              name: "Complete PhD induction and training",
+              completed: false
+            },
+            {
+              id: 102,
+              name: "Define research questions",
+              completed: false
+            },
+            {
+              id: 103,
+              name: "Complete initial literature review",
+              completed: false
+            },
+            {
+              id: 104,
+              name: "Establish literature streams",
+              completed: false
+            },
+            {
+              id: 105,
+              name: "Develop research methodology",
+              completed: false
+            },
+            {
+              id: 106,
+              name: "Prepare first-year review",
+              completed: false
+            }
+          ]
+        },
+
+        {
+          id: 2,
+          year: "Year 2",
+          title: "Research & Data Collection",
+          milestones: [
+            {
+              id: 201,
+              name: "Finalise research design",
+              completed: false
+            },
+            {
+              id: 202,
+              name: "Complete ethics approval",
+              completed: false
+            },
+            {
+              id: 203,
+              name: "Begin data collection",
+              completed: false
+            },
+            {
+              id: 204,
+              name: "Continue literature review",
+              completed: false
+            },
+            {
+              id: 205,
+              name: "Present research at a conference",
+              completed: false
+            },
+            {
+              id: 206,
+              name: "Complete major data collection",
+              completed: false
+            }
+          ]
+        },
+
+        {
+          id: 3,
+          year: "Year 3",
+          title: "Analysis & Writing",
+          milestones: [
+            {
+              id: 301,
+              name: "Complete data collection",
+              completed: false
+            },
+            {
+              id: 302,
+              name: "Analyse research data",
+              completed: false
+            },
+            {
+              id: 303,
+              name: "Develop findings",
+              completed: false
+            },
+            {
+              id: 304,
+              name: "Draft thesis chapters",
+              completed: false
+            },
+            {
+              id: 305,
+              name: "Submit papers for publication",
+              completed: false
+            },
+            {
+              id: 306,
+              name: "Present research at conferences",
+              completed: false
+            }
+          ]
+        },
+
+        {
+          id: 4,
+          year: "Year 4",
+          title: "Thesis Completion & Submission",
+          milestones: [
+            {
+              id: 401,
+              name: "Complete remaining thesis chapters",
+              completed: false
+            },
+            {
+              id: 402,
+              name: "Complete full thesis draft",
+              completed: false
+            },
+            {
+              id: 403,
+              name: "Supervisor review and revisions",
+              completed: false
+            },
+            {
+              id: 404,
+              name: "Finalise thesis",
+              completed: false
+            },
+            {
+              id: 405,
+              name: "Submit PhD thesis",
+              completed: false
+            },
+            {
+              id: 406,
+              name: "Prepare for viva",
+              completed: false
+            }
+          ]
+        }
+      ])
+  )
 };
 
 
@@ -71,7 +229,9 @@ async function loadPapers() {
 
 
 function normalizeReadStatus(value) {
-  const v = String(value ?? "").trim().toLowerCase();
+  const v = String(value ?? "")
+    .trim()
+    .toLowerCase();
 
   if (v === "read") return "Read";
   if (v === "reading") return "Reading";
@@ -151,7 +311,10 @@ async function createTask(task) {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Could not create task");
+
+      throw new Error(
+        error.error || "Could not create task"
+      );
     }
 
     const createdTask = await response.json();
@@ -165,6 +328,7 @@ async function createTask(task) {
 
   } catch (error) {
     console.error("Create task error:", error);
+
     alert("Could not save the task.");
   }
 }
@@ -187,7 +351,10 @@ async function updateTask(taskId, updates) {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Could not update task");
+
+      throw new Error(
+        error.error || "Could not update task"
+      );
     }
 
     const updatedTask = await response.json();
@@ -205,6 +372,7 @@ async function updateTask(taskId, updates) {
 
   } catch (error) {
     console.error("Update task error:", error);
+
     alert("Could not update the task.");
   }
 }
@@ -230,7 +398,10 @@ async function deleteTask(taskId) {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Could not delete task");
+
+      throw new Error(
+        error.error || "Could not delete task"
+      );
     }
 
     state.tasks = state.tasks.filter(
@@ -242,6 +413,7 @@ async function deleteTask(taskId) {
 
   } catch (error) {
     console.error("Delete task error:", error);
+
     alert("Could not delete the task.");
   }
 }
@@ -270,30 +442,53 @@ function renderPapers() {
     (!stream || p.stream === stream)
   );
 
-  $("papers-table").innerHTML =
+  const table = $("papers-table");
+
+  if (!table) return;
+
+  table.innerHTML =
     rows.length
       ? rows
           .map(
             p => `
               <tr>
-                <td>${esc(p.author)}</td>
-                <td>${esc(p.year)}</td>
+
+                <td>
+                  ${esc(p.author)}
+                </td>
+
+                <td>
+                  ${esc(p.year)}
+                </td>
 
                 <td>
                   ${
                     p.link
-                      ? `<a href="${escAttr(
-                          p.link
-                        )}" target="_blank" rel="noopener">
+                      ? `
+                        <a
+                          href="${escAttr(p.link)}"
+                          target="_blank"
+                          rel="noopener"
+                        >
                           ${esc(p.title)}
-                        </a>`
+                        </a>
+                      `
                       : esc(p.title)
                   }
                 </td>
 
-                <td>${esc(p.journal)}</td>
-                <td>${esc(p.stream)}</td>
-                <td>${esc(p.read)}</td>
+                <td>
+                  ${esc(p.journal)}
+                </td>
+
+                <td>
+                  ${esc(p.stream)}
+                </td>
+
+                <td>
+                  ${esc(p.read)}
+                </td>
+
               </tr>
             `
           )
@@ -337,12 +532,15 @@ function renderTasks() {
   if (!list) return;
 
   if (!state.tasks.length) {
+
     list.innerHTML = `
       <div class="empty">
         No tasks yet.
       </div>
     `;
+
   } else {
+
     list.innerHTML = state.tasks
       .map(task => {
 
@@ -353,6 +551,7 @@ function renderTasks() {
           <div class="list-item">
 
             <div>
+
               <strong>
                 ${esc(task.title)}
               </strong>
@@ -368,12 +567,15 @@ function renderTasks() {
               }
 
               <div class="muted">
+
                 ${
                   task.due_date
                     ? `Due: ${esc(task.due_date)}`
                     : "No due date"
                 }
+
               </div>
+
             </div>
 
             <div
@@ -388,6 +590,7 @@ function renderTasks() {
               <select
                 onchange="changeTaskStatus('${task.id}', this.value)"
               >
+
                 <option
                   value="todo"
                   ${status === "todo" ? "selected" : ""}
@@ -408,6 +611,7 @@ function renderTasks() {
                 >
                   Done
                 </option>
+
               </select>
 
               <button
@@ -466,17 +670,21 @@ function renderDashboardTasks() {
           .map(
             task => `
               <div class="list-item">
+
                 <strong>
                   ${esc(task.title)}
                 </strong>
 
                 <div class="muted">
+
                   ${
                     task.due_date
                       ? `Due: ${esc(task.due_date)}`
                       : "No due date"
                   }
+
                 </div>
+
               </div>
             `
           )
@@ -527,8 +735,10 @@ async function editTask(taskId) {
 
   await updateTask(taskId, {
     title: title.trim(),
-    description: description.trim() || null,
-    due_date: dueDate.trim() || null
+    description:
+      description.trim() || null,
+    due_date:
+      dueDate.trim() || null
   });
 }
 
@@ -549,6 +759,7 @@ function addTask() {
 const taskForm = $("task-form");
 
 if (taskForm) {
+
   taskForm.addEventListener(
     "submit",
     async event => {
@@ -561,6 +772,7 @@ if (taskForm) {
         );
 
       await createTask({
+
         title:
           formData.name?.trim() ||
           "Untitled task",
@@ -585,18 +797,22 @@ if (taskForm) {
 
 
 if ($("add-task")) {
+
   $("add-task").addEventListener(
     "click",
     addTask
   );
+
 }
 
 
 if ($("add-task-2")) {
+
   $("add-task-2").addEventListener(
     "click",
     addTask
   );
+
 }
 
 
@@ -662,6 +878,7 @@ function renderMeetings() {
     );
 
   if ($("next-meeting")) {
+
     $("next-meeting").innerHTML =
       next
         ? `
@@ -682,8 +899,86 @@ function renderMeetings() {
 
 
 /* =========================
-   ROADMAP
+   PROGRESS / ROADMAP
 ========================= */
+
+function saveRoadmap() {
+  localStorage.setItem(
+    "silvia-phd-roadmap",
+    JSON.stringify(state.roadmap)
+  );
+}
+
+
+function getYearProgress(year) {
+  if (!year.milestones.length) {
+    return 0;
+  }
+
+  const completed =
+    year.milestones.filter(
+      milestone => milestone.completed
+    ).length;
+
+  return Math.round(
+    (completed /
+      year.milestones.length) *
+      100
+  );
+}
+
+
+function getOverallProgress() {
+  const milestones =
+    state.roadmap.flatMap(
+      year => year.milestones
+    );
+
+  if (!milestones.length) {
+    return 0;
+  }
+
+  const completed =
+    milestones.filter(
+      milestone => milestone.completed
+    ).length;
+
+  return Math.round(
+    (completed /
+      milestones.length) *
+      100
+  );
+}
+
+
+function toggleMilestone(
+  yearId,
+  milestoneId
+) {
+  const year =
+    state.roadmap.find(
+      item => item.id === yearId
+    );
+
+  if (!year) return;
+
+  const milestone =
+    year.milestones.find(
+      item => item.id === milestoneId
+    );
+
+  if (!milestone) return;
+
+  milestone.completed =
+    !milestone.completed;
+
+  saveRoadmap();
+
+  renderRoadmap();
+
+  updateDashboard();
+}
+
 
 function renderRoadmap() {
   const list =
@@ -693,51 +988,101 @@ function renderRoadmap() {
 
   list.innerHTML =
     state.roadmap
-      .map(
-        item => `
-          <div class="list-item">
+      .map(year => {
 
-            <div class="card-head">
+        const progress =
+          getYearProgress(year);
+
+        return `
+          <div class="roadmap-year">
+
+            <div class="roadmap-year-head">
+
+              <div>
+
+                <span class="eyebrow">
+                  ${esc(year.year)}
+                </span>
+
+                <h3>
+                  ${esc(year.title)}
+                </h3>
+
+              </div>
+
               <strong>
-                ${esc(item.name)}
+                ${progress}%
               </strong>
 
-              <span>
-                ${item.progress}%
-              </span>
             </div>
 
             <div class="progress">
+
               <div
-                style="width:${item.progress}%"
+                style="width:${progress}%"
               ></div>
+
+            </div>
+
+            <div class="roadmap-milestones">
+
+              ${year.milestones
+                .map(
+                  milestone => `
+                    <label class="milestone">
+
+                      <input
+                        type="checkbox"
+                        ${
+                          milestone.completed
+                            ? "checked"
+                            : ""
+                        }
+                        onchange="
+                          toggleMilestone(
+                            ${year.id},
+                            ${milestone.id}
+                          )
+                        "
+                      >
+
+                      <span
+                        class="${
+                          milestone.completed
+                            ? "completed"
+                            : ""
+                        }"
+                      >
+                        ${esc(milestone.name)}
+                      </span>
+
+                    </label>
+                  `
+                )
+                .join("")}
+
             </div>
 
           </div>
-        `
-      )
+        `;
+      })
       .join("");
 
-  const average =
-    state.roadmap.length
-      ? Math.round(
-          state.roadmap.reduce(
-            (total, item) =>
-              total + item.progress,
-            0
-          ) /
-            state.roadmap.length
-        )
-      : 0;
+  const overall =
+    getOverallProgress();
 
   if ($("roadmap-percent")) {
+
     $("roadmap-percent").textContent =
-      average + "%";
+      overall + "%";
+
   }
 
   if ($("roadmap-bar")) {
+
     $("roadmap-bar").style.width =
-      average + "%";
+      overall + "%";
+
   }
 }
 
@@ -768,11 +1113,14 @@ function updateDashboard() {
 
       const date =
         new Date(
-          task.due_date + "T23:59:59"
+          task.due_date +
+            "T23:59:59"
         );
 
-      return date >= now &&
-        date <= sevenDays;
+      return (
+        date >= now &&
+        date <= sevenDays
+      );
     });
 
   const overdue =
@@ -787,20 +1135,42 @@ function updateDashboard() {
 
       const date =
         new Date(
-          task.due_date + "T23:59:59"
+          task.due_date +
+            "T23:59:59"
         );
 
       return date < now;
     });
 
   if ($("due-soon")) {
+
     $("due-soon").textContent =
       dueSoon.length;
+
   }
 
   if ($("overdue-tasks")) {
+
     $("overdue-tasks").textContent =
       overdue.length;
+
+  }
+
+  const overallProgress =
+    getOverallProgress();
+
+  if ($("roadmap-percent")) {
+
+    $("roadmap-percent").textContent =
+      overallProgress + "%";
+
+  }
+
+  if ($("roadmap-bar")) {
+
+    $("roadmap-bar").style.width =
+      overallProgress + "%";
+
   }
 }
 
@@ -840,14 +1210,28 @@ document
           $(target);
 
         if (targetPage) {
+
           targetPage.classList.remove(
             "hidden"
           );
+
         }
 
+        document
+          .querySelectorAll(".sidebar a")
+          .forEach(navLink =>
+            navLink.classList.remove(
+              "active"
+            )
+          );
+
+        link.classList.add("active");
+
         if ($("page-title")) {
+
           $("page-title").textContent =
             link.textContent.trim();
+
         }
       }
     );
@@ -859,24 +1243,32 @@ document
 ========================= */
 
 if ($("paper-search")) {
+
   $("paper-search").addEventListener(
     "input",
     renderPapers
   );
+
 }
 
+
 if ($("paper-status")) {
+
   $("paper-status").addEventListener(
     "change",
     renderPapers
   );
+
 }
 
+
 if ($("paper-stream")) {
+
   $("paper-stream").addEventListener(
     "change",
     renderPapers
   );
+
 }
 
 
@@ -916,6 +1308,10 @@ function escAttr(value) {
 ========================= */
 
 loadPapers();
+
 loadTasks();
+
 renderMeetings();
+
 renderRoadmap();
+```
