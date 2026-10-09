@@ -1356,3 +1356,41 @@ renderRoadmap();
 renderMeetings();
 loadPapers();
 loadTasks();
+
+// FIX: Restore navigation using the original HTML links
+
+document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link => {
+  link.addEventListener('click', function (event) {
+    event.preventDefault();
+
+    const targetId = this.getAttribute('href').substring(1);
+    const targetPage = document.getElementById(targetId);
+
+    if (!targetPage || !targetPage.classList.contains('page')) {
+      return;
+    }
+
+    document.querySelectorAll('.page').forEach(page => {
+      page.classList.add('hidden');
+    });
+
+    targetPage.classList.remove('hidden');
+
+    document.querySelectorAll('.sidebar nav a').forEach(navLink => {
+      navLink.classList.remove('active');
+    });
+
+    this.classList.add('active');
+
+    const pageTitle = document.getElementById('page-title');
+
+    if (pageTitle) {
+      pageTitle.textContent =
+        this.textContent.trim() === 'Progress'
+          ? 'PhD Progress'
+          : this.textContent.trim();
+    }
+
+    history.replaceState(null, '', '#' + targetId);
+  });
+});
