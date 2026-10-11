@@ -218,6 +218,118 @@ h3 {
   border-bottom: 1px solid #edf0f2;
 }
 
+.task-row-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.task-row-heading strong {
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.task-status-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.task-status-pill {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.task-status-pill:hover {
+  box-shadow: 0 1px 4px #20242a14;
+}
+
+.task-status-pill:focus-visible,
+.task-status-option:focus-visible {
+  outline: 2px solid #64748b;
+  outline-offset: 2px;
+}
+
+.status-todo {
+  color: #695b85;
+  background: #f1edf8;
+}
+
+.status-in_progress {
+  color: #8a5b17;
+  background: #fbf1dc;
+}
+
+.status-done {
+  color: #496b55;
+  background: #eaf2eb;
+}
+
+.task-status-menu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  gap: 3px;
+  width: 154px;
+  padding: 5px;
+  background: #fff;
+  border: 1px solid #e8eaed;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px #20242a14;
+}
+
+.task-status-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #424852;
+  text-align: left;
+  font-size: 13px;
+}
+
+.task-status-option.status-todo {
+  color: #695b85;
+}
+
+.task-status-option.status-in_progress {
+  color: #8a5b17;
+}
+
+.task-status-option.status-done {
+  color: #496b55;
+}
+
+.task-status-option[aria-checked="true"] {
+  background: #f5f6f8;
+  font-weight: 600;
+}
+
+.task-status-option:hover {
+  background: #f5f6f8;
+}
+
+.task-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .list-item:last-child {
   border-bottom: 0;
 }
@@ -259,13 +371,8 @@ th {
 
 .task-actions {
   display: flex;
-  gap: 12px;
+  justify-content: flex-end;
   margin-top: 10px;
-  align-items: center;
-}
-
-.task-actions select {
-  max-width: 140px;
 }
 
 .roadmap-year {
