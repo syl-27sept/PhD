@@ -4,7 +4,8 @@ function MeetingsPage({
   meetingDialogOpen,
   onMeetingDialogToggle,
   onMeetingFormChange,
-  onAddMeeting
+  onAddMeeting,
+  onDeleteMeeting
 }) {
   return (
     <section className="page">
@@ -35,6 +36,7 @@ function MeetingsPage({
                 <strong>{meeting.title}</strong>
                 <div className="muted">{meeting.date}</div>
                 {meeting.agenda ? <div className="muted">{meeting.agenda}</div> : null}
+                <button type="button" className="text-button" onClick={() => onDeleteMeeting(meeting.id)}>Delete</button>
               </div>
             ))
           ) : (

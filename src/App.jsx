@@ -333,6 +333,10 @@ function App() {
     setMeetingDialogOpen(false);
   };
 
+  const deleteMeeting = (meetingId) => {
+    setMeetings((current) => current.filter((meeting) => meeting.id !== meetingId));
+  };
+
   const updateTaskStatus = (taskId, status) => {
     setTasks((current) => current.map((task) => (task.id === taskId ? { ...task, status } : task)));
   };
@@ -483,6 +487,7 @@ function App() {
             onMeetingDialogToggle={setMeetingDialogOpen}
             onMeetingFormChange={(field, value) => setMeetingForm((current) => ({ ...current, [field]: value }))}
             onAddMeeting={addMeeting}
+            onDeleteMeeting={deleteMeeting}
           />
         )}
 
