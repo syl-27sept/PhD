@@ -429,20 +429,10 @@ function App() {
       <main className="main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">PhD � Year 1</p>
+            {(activeSection === 'dashboard' || activeSection === 'progress') && (
+              <p className="eyebrow">PhD Year 1</p>
+            )}
             <h1>{pageTitle}</h1>
-          </div>
-          <div className="actions">
-            <button
-              type="button"
-              className="button secondary"
-              onClick={() => {
-                setActiveSection('tasks');
-                setTaskDialogOpen(true);
-              }}
-            >
-              + Add Task
-            </button>
           </div>
         </header>
 
