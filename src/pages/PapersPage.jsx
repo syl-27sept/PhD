@@ -35,7 +35,15 @@ function PapersPage({
       <div className="card">
         <div className="card-head">
           <h2>Papers</h2>
-          <a href="https://docs.google.com" target="_blank" rel="noreferrer">Open Google Sheet ↗</a>
+          
+<a
+  href="https://docs.google.com/spreadsheets/d/107Ej9K3Ztxl6EWqd7k8WtdaXhmXNRnT0tmeBni4V5iM/edit"
+  target="_blank"
+  rel="noreferrer"
+>
+  Open Google Sheet ↗
+</a>
+
         </div>
         <div className="table-wrap">
           <table>
