@@ -360,6 +360,35 @@ function App() {
     }));
   };
 
+  const addRoadmapMilestone = (yearId, goalId, name) => {
+    setRoadmap((current) => current.map((year) => {
+      if (year.id !== yearId) return year;
+
+      return {
+        ...year,
+        goals: year.goals.map((goal) => {
+          if (goal.id !== goalId) return goal;
+          return {
+            ...goal,
+            milestones: [
+              ...goal.milestones,
+              {
+                id: `milestone-${Date.now()}`,
+                name,
+                weight: 1,
+                criteria: '',
+                evidence: '',
+                due_date: '',
+                completed: false,
+                tasks: []
+              }
+            ]
+          };
+        })
+      };
+    }));
+  };
+
   const updateRoadmapTaskStatus = (yearId, goalId, milestoneId, taskId, status) => {
     setRoadmap((current) => current.map((year) => {
       if (year.id !== yearId) return year;
@@ -400,7 +429,7 @@ function App() {
       <main className="main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">PhD · Year 1</p>
+            <p className="eyebrow">PhD ï¿½ Year 1</p>
             <h1>{pageTitle}</h1>
           </div>
           <div className="actions">
@@ -476,6 +505,7 @@ function App() {
             getMilestoneProgress={getMilestoneProgress}
             toggleMilestone={toggleMilestone}
             updateRoadmapTaskStatus={updateRoadmapTaskStatus}
+            onAddMilestone={addRoadmapMilestone}
           />
         )}
       </main>
