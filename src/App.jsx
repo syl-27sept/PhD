@@ -5,13 +5,6 @@ import PapersPage from './pages/PapersPage';
 import TasksPage from './pages/TasksPage';
 import MeetingsPage from './pages/MeetingsPage';
 import ProgressPage from './pages/ProgressPage';
-import {
-  loadMeetings,
-  loadRoadmap,
-  saveMeetings,
-  saveRoadmap,
-  readLocalStorage
-} from './services/api';
 
 const STORAGE_KEYS = {
   papers: 'silvia-phd-papers',
@@ -234,38 +227,18 @@ function getOverallProgress(roadmap) {
 
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [taskForm, setTaskForm] = useState({ title: '', description: '', due_date: '', status: 'todo' });
-  const [meetingForm, setMeetingForm] = useState({ title: '', date: '', agenda: '' });
   const [tasks, setTasks] = useState(() => getStoredValue(STORAGE_KEYS.tasks, defaultTasks));
-  const [meetings, setMeetings] = useState(() => readLocalStorage(STORAGE_KEYS.meetings, defaultMeetings));
+  const [meetings, setMeetings] = useState(() => getStoredValue(STORAGE_KEYS.meetings, defaultMeetings));
   const [papers, setPapers] = useState(() => getStoredValue(STORAGE_KEYS.papers, defaultPapers));
-  const [roadmap, setRoadmap] = useState(() => readLocalStorage(STORAGE_KEYS.roadmap, defaultRoadmap));
+  const [roadmap, setRoadmap] = useState(() => getStoredValue(STORAGE_KEYS.roadmap, defaultRoadmap));
   const [taskFilter, setTaskFilter] = useState('all');
   const [paperSearch, setPaperSearch] = useState('');
   const [paperStatus, setPaperStatus] = useState('');
   const [paperStream, setPaperStream] = useState('');
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [meetingDialogOpen, setMeetingDialogOpen] = useState(false);
-  const [editingMeetingId, setEditingMeetingId] = useState(null);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    async function hydratePrivateData() {
-      const nextMeetings = await loadMeetings();
-      const nextRoadmap = await loadRoadmap();
-
-      if (isCancelled) return;
-      setMeetings(nextMeetings);
-      setRoadmap(nextRoadmap);
-    }
-
-    hydratePrivateData();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+  const [taskForm, setTaskForm] = useState({ title: '', description: '', due_date: '', status: 'todo' });
+  const [meetingForm, setMeetingForm] = useState({ title: '', date: '', agenda: '' });
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
@@ -273,7 +246,6 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.meetings, JSON.stringify(meetings));
-    saveMeetings(meetings).catch((error) => console.error('Meeting save failed:', error));
   }, [meetings]);
 
   useEffect(() => {
@@ -282,7 +254,6 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.roadmap, JSON.stringify(roadmap));
-    saveRoadmap(roadmap).catch((error) => console.error('Roadmap save failed:', error));
   }, [roadmap]);
 
   const allStreamOptions = useMemo(() => {
@@ -348,49 +319,18 @@ function App() {
     event.preventDefault();
     if (!meetingForm.title.trim() || !meetingForm.date) return;
 
-    if (editingMeetingId) {
-      setMeetings((current) => current.map((meeting) => {
-        if (meeting.id !== editingMeetingId) return meeting;
-        return {
-          ...meeting,
-          title: meetingForm.title.trim(),
-          date: meetingForm.date,
-          agenda: meetingForm.agenda.trim()
-        };
-      }));
-    } else {
-      setMeetings((current) => [
-        ...current,
-        {
-          id: `meeting-${Date.now()}`,
-          title: meetingForm.title.trim(),
-          date: meetingForm.date,
-          agenda: meetingForm.agenda.trim()
-        }
-      ]);
-    }
+    setMeetings((current) => [
+      ...current,
+      {
+        id: `meeting-${Date.now()}`,
+        title: meetingForm.title.trim(),
+        date: meetingForm.date,
+        agenda: meetingForm.agenda.trim()
+      }
+    ]);
 
     setMeetingForm({ title: '', date: '', agenda: '' });
-    setEditingMeetingId(null);
     setMeetingDialogOpen(false);
-  };
-
-  const editMeeting = (meeting) => {
-    setEditingMeetingId(meeting.id);
-    setMeetingForm({
-      title: meeting.title || '',
-      date: meeting.date || '',
-      agenda: meeting.agenda || ''
-    });
-    setMeetingDialogOpen(true);
-  };
-
-  const deleteMeeting = (meetingId) => {
-    setMeetings((current) => current.filter((meeting) => meeting.id !== meetingId));
-    if (editingMeetingId === meetingId) {
-      setEditingMeetingId(null);
-      setMeetingForm({ title: '', date: '', agenda: '' });
-    }
   };
 
   const updateTaskStatus = (taskId, status) => {
@@ -460,7 +400,7 @@ function App() {
       <main className="main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">PhD ï¿½ Year 1</p>
+            <p className="eyebrow">PhD · Year 1</p>
             <h1>{pageTitle}</h1>
           </div>
           <div className="actions">
@@ -521,18 +461,9 @@ function App() {
             meetings={meetings}
             meetingForm={meetingForm}
             meetingDialogOpen={meetingDialogOpen}
-            editingMeetingId={editingMeetingId}
-            onMeetingDialogToggle={(nextValue) => {
-              setMeetingDialogOpen(nextValue);
-              if (!nextValue) {
-                setEditingMeetingId(null);
-                setMeetingForm({ title: '', date: '', agenda: '' });
-              }
-            }}
+            onMeetingDialogToggle={setMeetingDialogOpen}
             onMeetingFormChange={(field, value) => setMeetingForm((current) => ({ ...current, [field]: value }))}
             onAddMeeting={addMeeting}
-            onEditMeeting={editMeeting}
-            onDeleteMeeting={deleteMeeting}
           />
         )}
 
