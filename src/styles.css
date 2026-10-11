@@ -345,13 +345,6 @@ h3 {
   border-radius: 2px;
 }
 
-.reading-example-note {
-  margin: 14px 0 0;
-  color: var(--color-muted);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
 .reading-empty {
   margin: 12px 0;
 }

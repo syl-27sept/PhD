@@ -56,7 +56,6 @@ function FromYourReading({ quotes = exampleQuotes }) {
         <p className="empty reading-empty">No quotations available yet.</p>
       )}
 
-      <p className="reading-example-note">Fictional examples for demonstration only — not quotations from published research.</p>
     </article>
   );
 }
