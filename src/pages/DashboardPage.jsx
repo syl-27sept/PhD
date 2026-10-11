@@ -2,7 +2,7 @@ import StatCard from '../components/StatCard';
 
 function DashboardPage({
   papers,
-  dashboardDueSoon,
+  outstandingTasks,
   nextMeeting,
   overallProgress,
   onViewProgress,
@@ -14,7 +14,7 @@ function DashboardPage({
         <StatCard label="Total papers" value={papers.length} />
         <StatCard label="Unread papers" value={papers.filter((paper) => paper.read === 'Unread').length} />
         <StatCard label="Currently reading" value={papers.filter((paper) => paper.read === 'Reading').length} />
-        <StatCard label="Tasks due soon" value={dashboardDueSoon.length} />
+        <StatCard label="Outstanding tasks" value={outstandingTasks.length} />
       </div>
 
       <div className="grid two">
@@ -51,19 +51,19 @@ function DashboardPage({
       <div className="grid two">
         <article className="card">
           <div className="card-head">
-            <h2>Tasks due soon</h2>
+            <h2>Outstanding tasks</h2>
             <button type="button" className="text-button" onClick={() => onViewTasks()}>View all</button>
           </div>
           <div className="list">
-            {dashboardDueSoon.length ? (
-              dashboardDueSoon.slice(0, 5).map((task) => (
+            {outstandingTasks.length ? (
+              outstandingTasks.map((task) => (
                 <div key={task.id} className="list-item">
                   <strong>{task.title}</strong>
                   <div className="muted">{task.due_date ? `Due: ${task.due_date}` : 'No due date'}</div>
                 </div>
               ))
             ) : (
-              <div className="empty">No outstanding tasks.</div>
+              <div className="empty">All tasks are done.</div>
             )}
           </div>
         </article>

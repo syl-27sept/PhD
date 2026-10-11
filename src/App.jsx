@@ -274,17 +274,7 @@ function App() {
     });
   }, [paperSearch, paperStatus, paperStream, papers]);
 
-  const dashboardDueSoon = useMemo(() => {
-    const today = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
-
-    return tasks.filter((task) => {
-      if (!task.due_date || task.status === 'done') return false;
-      const due = new Date(`${task.due_date}T12:00:00`);
-      return due >= today && due <= nextWeek;
-    });
-  }, [tasks]);
+  const outstandingTasks = useMemo(() => tasks.filter((task) => task.status !== 'done'), [tasks]);
 
   const nextMeeting = useMemo(() => {
     const now = new Date();
@@ -443,7 +433,7 @@ function App() {
         {activeSection === 'dashboard' && (
           <DashboardPage
             papers={papers}
-            dashboardDueSoon={dashboardDueSoon}
+            outstandingTasks={outstandingTasks}
             nextMeeting={nextMeeting}
             overallProgress={overallProgress}
             onViewProgress={() => setActiveSection('progress')}
