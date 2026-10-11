@@ -300,6 +300,62 @@ h3 {
   margin-top: 0;
 }
 
+.dashboard-reading-card {
+}
+
+.reading-quote {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--color-lavender);
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.reading-attribution,
+.reading-paper-title {
+  margin: 0;
+  color: #51485e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reading-attribution {
+  font-weight: 650;
+}
+
+.reading-paper-title {
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.reading-paper-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #51416a;
+  font-size: 13px;
+  font-weight: 650;
+  text-underline-offset: 3px;
+}
+
+.reading-paper-link:focus-visible {
+  outline: 2px solid var(--color-lavender-ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.reading-example-note {
+  margin: 14px 0 0;
+  color: var(--color-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.reading-empty {
+  margin: 12px 0;
+}
+
 .dashboard-page .text-button {
   border-radius: 6px;
   padding: 5px 7px;

@@ -1,4 +1,5 @@
 import StatCard from '../components/StatCard';
+import FromYourReading from '../components/FromYourReading';
 
 function DashboardPage({
   papers,
@@ -70,14 +71,7 @@ function DashboardPage({
           </div>
         </article>
 
-        <article className="card dashboard-card dashboard-activity-card">
-          <div className="card-head">
-            <h2>Recent activity</h2>
-          </div>
-          <div className="list">
-            <div className="empty">Activity will appear here.</div>
-          </div>
-        </article>
+        <FromYourReading />
       </div>
     </section>
   );
