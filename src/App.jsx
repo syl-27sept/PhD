@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import Sidebar from './components/Sidebar';
+import DashboardPage from './pages/DashboardPage';
+import PapersPage from './pages/PapersPage';
+import TasksPage from './pages/TasksPage';
+import MeetingsPage from './pages/MeetingsPage';
+import ProgressPage from './pages/ProgressPage';
 
 const STORAGE_KEYS = {
   papers: 'silvia-phd-papers',
@@ -150,8 +156,6 @@ const defaultPapers = [
   { author: 'Author B', year: 2023, title: 'Qualitative evidence synthesis in practice', journal: 'Educational Review', link: '#', stream: 'Literature review', read: 'Reading' },
   { author: 'Author C', year: 2022, title: 'The role of supervision in research design', journal: 'Higher Education Studies', link: '#', stream: 'Supervision', read: 'Read' }
 ];
-
-const readStatusOptions = ['Unread', 'Reading', 'Read'];
 
 function getStoredValue(key, fallback) {
   try {
@@ -391,27 +395,13 @@ function App() {
 
   return (
     <>
-      <aside className="sidebar">
-        <div className="brand">Silvia PhD</div>
-        <nav aria-label="Main navigation">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`nav-button ${activeSection === item.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+      <Sidebar navItems={navItems} activeSection={activeSection} onSelect={setActiveSection} />
 
       <main className="main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">PhD · Year 1</p>
-            <h1 id="page-title">{pageTitle}</h1>
+            <p className="eyebrow">PhD � Year 1</p>
+            <h1>{pageTitle}</h1>
           </div>
           <div className="actions">
             <button
@@ -427,358 +417,67 @@ function App() {
           </div>
         </header>
 
-        <section className={`page ${activeSection === 'dashboard' ? '' : 'hidden'}`}>
-          <div className="stats-grid">
-            <article className="stat">
-              <span>Total papers</span>
-              <strong>{papers.length}</strong>
-            </article>
-            <article className="stat">
-              <span>Unread papers</span>
-              <strong>{papers.filter((paper) => paper.read === 'Unread').length}</strong>
-            </article>
-            <article className="stat">
-              <span>Currently reading</span>
-              <strong>{papers.filter((paper) => paper.read === 'Reading').length}</strong>
-            </article>
-            <article className="stat">
-              <span>Tasks due soon</span>
-              <strong>{dashboardDueSoon.length}</strong>
-            </article>
-          </div>
+        {activeSection === 'dashboard' && (
+          <DashboardPage
+            papers={papers}
+            dashboardDueSoon={dashboardDueSoon}
+            nextMeeting={nextMeeting}
+            overallProgress={overallProgress}
+            onViewProgress={() => setActiveSection('progress')}
+            onViewTasks={() => setActiveSection('tasks')}
+          />
+        )}
 
-          <div className="grid two">
-            <article className="card">
-              <div className="card-head">
-                <h2>PhD progress</h2>
-                <span>{overallProgress}%</span>
-              </div>
-              <div className="progress" role="progressbar" aria-label="Overall PhD progress" aria-valuenow={overallProgress}>
-                <div style={{ width: `${overallProgress}%` }} />
-              </div>
-              <p className="muted">Overall progress across your four-year PhD roadmap, weighted by the relative importance of goals, milestones and tasks.</p>
-              <button type="button" className="button secondary" onClick={() => setActiveSection('progress')}>View PhD roadmap →</button>
-            </article>
+        {activeSection === 'papers' && (
+          <PapersPage
+            paperSearch={paperSearch}
+            paperStatus={paperStatus}
+            paperStream={paperStream}
+            filteredPapers={filteredPapers}
+            allStreamOptions={allStreamOptions}
+            onSearch={setPaperSearch}
+            onStatusChange={setPaperStatus}
+            onStreamChange={setPaperStream}
+          />
+        )}
 
-            <article className="card">
-              <div className="card-head">
-                <h2>Upcoming supervisor meeting</h2>
-              </div>
-              {nextMeeting ? (
-                <div>
-                  <strong>{nextMeeting.title}</strong>
-                  <div className="muted">{nextMeeting.date}</div>
-                  <div className="muted">{nextMeeting.agenda}</div>
-                </div>
-              ) : (
-                <div className="empty">No meetings added yet.</div>
-              )}
-            </article>
-          </div>
+        {activeSection === 'tasks' && (
+          <TasksPage
+            taskFilter={taskFilter}
+            taskForm={taskForm}
+            taskDialogOpen={taskDialogOpen}
+            filteredTasks={filteredTasks}
+            onTaskFilter={setTaskFilter}
+            onTaskDialogToggle={setTaskDialogOpen}
+            onTaskFormChange={(field, value) => setTaskForm((current) => ({ ...current, [field]: value }))}
+            onAddTask={addTask}
+            onUpdateTaskStatus={updateTaskStatus}
+            onDeleteTask={deleteTask}
+          />
+        )}
 
-          <div className="grid two">
-            <article className="card">
-              <div className="card-head">
-                <h2>Tasks due soon</h2>
-                <button type="button" className="text-button" onClick={() => setActiveSection('tasks')}>View all</button>
-              </div>
-              <div className="list">
-                {dashboardDueSoon.length ? (
-                  dashboardDueSoon.slice(0, 5).map((task) => (
-                    <div key={task.id} className="list-item">
-                      <strong>{task.title}</strong>
-                      <div className="muted">{task.due_date ? `Due: ${task.due_date}` : 'No due date'}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty">No outstanding tasks.</div>
-                )}
-              </div>
-            </article>
+        {activeSection === 'meetings' && (
+          <MeetingsPage
+            meetings={meetings}
+            meetingForm={meetingForm}
+            meetingDialogOpen={meetingDialogOpen}
+            onMeetingDialogToggle={setMeetingDialogOpen}
+            onMeetingFormChange={(field, value) => setMeetingForm((current) => ({ ...current, [field]: value }))}
+            onAddMeeting={addMeeting}
+          />
+        )}
 
-            <article className="card">
-              <div className="card-head">
-                <h2>Recent activity</h2>
-              </div>
-              <div className="list">
-                <div className="empty">Activity will appear here.</div>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section className={`page ${activeSection === 'papers' ? '' : 'hidden'}`}>
-          <div className="section-tools">
-            <input type="search" value={paperSearch} onChange={(event) => setPaperSearch(event.target.value)} placeholder="Search papers..." aria-label="Search papers" />
-            <select value={paperStatus} onChange={(event) => setPaperStatus(event.target.value)} aria-label="Filter papers by status">
-              <option value="">All statuses</option>
-              {readStatusOptions.map((status) => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-            <select value={paperStream} onChange={(event) => setPaperStream(event.target.value)} aria-label="Filter by literature stream">
-              <option value="">All literature streams</option>
-              {allStreamOptions.map((stream) => (
-                <option key={stream} value={stream}>{stream}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="card">
-            <div className="card-head">
-              <h2>Papers</h2>
-              <a href="https://docs.google.com" target="_blank" rel="noreferrer">Open Google Sheet ↗</a>
-            </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Author(s)</th>
-                    <th>Year</th>
-                    <th>Title</th>
-                    <th>Journal/Book</th>
-                    <th>Literature stream</th>
-                    <th>Read?</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPapers.length ? (
-                    filteredPapers.map((paper, index) => (
-                      <tr key={`${paper.title}-${index}`}>
-                        <td>{paper.author}</td>
-                        <td>{paper.year}</td>
-                        <td>
-                          {paper.link && paper.link !== '#' ? (
-                            <a href={paper.link} target="_blank" rel="noreferrer">{paper.title}</a>
-                          ) : (
-                            paper.title
-                          )}
-                        </td>
-                        <td>{paper.journal}</td>
-                        <td>{paper.stream}</td>
-                        <td>{paper.read}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="empty">No papers found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <section className={`page ${activeSection === 'tasks' ? '' : 'hidden'}`}>
-          <div className="card">
-            <div className="card-head">
-              <h2>Tasks</h2>
-              <button type="button" className="button" onClick={() => setTaskDialogOpen((current) => !current)}>
-                + Add Task
-              </button>
-            </div>
-
-            {taskDialogOpen && (
-              <form className="task-form" onSubmit={addTask}>
-                <input type="text" value={taskForm.title} onChange={(event) => setTaskForm({ ...taskForm, title: event.target.value })} placeholder="Task name" required />
-                <textarea value={taskForm.description} onChange={(event) => setTaskForm({ ...taskForm, description: event.target.value })} placeholder="Description" rows="3" />
-                <div className="form-row">
-                  <input type="date" value={taskForm.due_date} onChange={(event) => setTaskForm({ ...taskForm, due_date: event.target.value })} />
-                  <select value={taskForm.status} onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })}>
-                    <option value="todo">To do</option>
-                    <option value="in_progress">In progress</option>
-                    <option value="done">Done</option>
-                  </select>
-                </div>
-                <div className="dialog-actions">
-                  <button type="button" className="button secondary" onClick={() => setTaskDialogOpen(false)}>Cancel</button>
-                  <button type="submit" className="button">Save task</button>
-                </div>
-              </form>
-            )}
-
-            <div className="section-tools">
-              <select value={taskFilter} onChange={(event) => setTaskFilter(event.target.value)} aria-label="Filter tasks">
-                <option value="all">All tasks</option>
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="done">Completed</option>
-              </select>
-            </div>
-
-            <div className="list">
-              {filteredTasks.length ? (
-                filteredTasks.map((task) => (
-                  <div key={task.id} className="list-item">
-                    <strong>{task.title}</strong>
-                    {task.description ? <div className="muted">{task.description}</div> : null}
-                    <div className="muted">{task.due_date ? `Due: ${task.due_date}` : 'No due date'}</div>
-                    <div className="task-actions">
-                      <select value={task.status} onChange={(event) => updateTaskStatus(task.id, event.target.value)}>
-                        <option value="todo">To do</option>
-                        <option value="in_progress">In progress</option>
-                        <option value="done">Done</option>
-                      </select>
-                      <button type="button" className="button secondary" onClick={() => deleteTask(task.id)}>Delete</button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty">No tasks yet.</div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className={`page ${activeSection === 'meetings' ? '' : 'hidden'}`}>
-          <div className="card">
-            <div className="card-head">
-              <h2>Supervisor Meetings</h2>
-              <button type="button" className="button" onClick={() => setMeetingDialogOpen((current) => !current)}>
-                + Add Meeting
-              </button>
-            </div>
-
-            {meetingDialogOpen && (
-              <form className="task-form" onSubmit={addMeeting}>
-                <input type="text" value={meetingForm.title} onChange={(event) => setMeetingForm({ ...meetingForm, title: event.target.value })} placeholder="Meeting title" required />
-                <input type="date" value={meetingForm.date} onChange={(event) => setMeetingForm({ ...meetingForm, date: event.target.value })} required />
-                <textarea value={meetingForm.agenda} onChange={(event) => setMeetingForm({ ...meetingForm, agenda: event.target.value })} placeholder="Agenda" rows="3" />
-                <div className="dialog-actions">
-                  <button type="button" className="button secondary" onClick={() => setMeetingDialogOpen(false)}>Cancel</button>
-                  <button type="submit" className="button">Save meeting</button>
-                </div>
-              </form>
-            )}
-
-            <div className="list">
-              {meetings.length ? (
-                [...meetings].sort((a, b) => new Date(a.date) - new Date(b.date)).map((meeting) => (
-                  <div key={meeting.id} className="list-item">
-                    <strong>{meeting.title}</strong>
-                    <div className="muted">{meeting.date}</div>
-                    {meeting.agenda ? <div className="muted">{meeting.agenda}</div> : null}
-                  </div>
-                ))
-              ) : (
-                <div className="empty">No meetings yet.</div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className={`page ${activeSection === 'progress' ? '' : 'hidden'}`}>
-          <div className="card">
-            <div className="card-head">
-              <div>
-                <h2>PhD Progress</h2>
-                <p className="muted">Four-year roadmap for your PhD journey.</p>
-              </div>
-              <strong>{overallProgress}%</strong>
-            </div>
-            <div className="progress" role="progressbar" aria-label="Overall roadmap progress" aria-valuenow={overallProgress}>
-              <div style={{ width: `${overallProgress}%` }} />
-            </div>
-            <div className="weighting-explanation">
-              <h3>How PhD progress is calculated</h3>
-              <p className="muted">Progress is calculated hierarchically. Individual task progress contributes to milestones, milestones contribute to goals, goals contribute to academic years, and the years contribute to your overall PhD progress.</p>
-              <p className="muted">Each year, goal, milestone and roadmap task has an importance weight. A weight of 3 gives an item three times the influence of an item weighted 1 within the same parent level.</p>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-head">
-              <div>
-                <h2>Research roadmap</h2>
-                <p className="muted">Organise your research into years, goals, milestones and actionable tasks.</p>
-              </div>
-            </div>
-
-            <div className="list">
-              {roadmap.map((year) => (
-                <section key={year.id} className="roadmap-year">
-                  <div className="roadmap-year-head">
-                    <div>
-                      <span className="eyebrow">{year.year} · Weight {year.weight}</span>
-                      <h3>{year.title}</h3>
-                    </div>
-                    <div className="roadmap-actions">
-                      <strong>{getYearProgress(year)}%</strong>
-                    </div>
-                  </div>
-
-                  <div className="progress"><div style={{ width: `${getYearProgress(year)}%` }} /></div>
-
-                  {year.goals.length ? (
-                    year.goals.map((goal) => (
-                      <details key={goal.id} className="roadmap-goal" open>
-                        <summary>
-                          <span>
-                            <strong>{goal.title}</strong>
-                            <span className="muted"> · Weight {goal.weight}</span>
-                          </span>
-                          <strong>{getGoalProgress(goal)}%</strong>
-                        </summary>
-                        {goal.description ? <p className="muted">{goal.description}</p> : null}
-                        <div className="progress"><div style={{ width: `${getGoalProgress(goal)}%` }} /></div>
-
-                        {goal.milestones.length ? (
-                          goal.milestones.map((milestone) => (
-                            <article key={milestone.id} className="roadmap-milestone">
-                              <div className="milestone-heading">
-                                <label className="milestone-check">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(milestone.completed)}
-                                    onChange={(event) => toggleMilestone(year.id, goal.id, milestone.id, event.target.checked)}
-                                  />
-                                  <span><strong>{milestone.name}</strong></span>
-                                </label>
-                                <strong>{getMilestoneProgress(milestone)}%</strong>
-                              </div>
-                              <div className="muted">Importance weight: {milestone.weight}</div>
-                              <p className="muted"><strong>Completion criteria:</strong> {milestone.criteria || 'Not defined yet'}</p>
-                              {milestone.due_date ? <p className="muted">Due: {milestone.due_date}</p> : null}
-                              <div className="progress"><div style={{ width: `${getMilestoneProgress(milestone)}%` }} /></div>
-
-                              <div className="roadmap-tasks">
-                                {milestone.tasks.length ? (
-                                  milestone.tasks.map((task) => (
-                                    <div key={task.id} className="roadmap-task">
-                                      <div className="roadmap-task-main">
-                                        <strong>{task.title}</strong>
-                                        {task.description ? <div className="muted">{task.description}</div> : null}
-                                        {task.due_date ? <div className="muted">Due: {task.due_date}</div> : null}
-                                      </div>
-                                      <div className="roadmap-task-controls">
-                                        <select value={task.status || 'todo'} onChange={(event) => updateRoadmapTaskStatus(year.id, goal.id, milestone.id, task.id, event.target.value)}>
-                                          <option value="todo">To do</option>
-                                          <option value="in_progress">In progress</option>
-                                          <option value="done">Done</option>
-                                        </select>
-                                      </div>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="empty">No tasks yet. Add concrete actions to track progress.</div>
-                                )}
-                              </div>
-                            </article>
-                          ))
-                        ) : (
-                          <div className="empty">No milestones yet.</div>
-                        )}
-                      </details>
-                    ))
-                  ) : (
-                    <div className="empty">No goals yet. Add a goal to start planning this year.</div>
-                  )}
-                </section>
-              ))}
-            </div>
-          </div>
-        </section>
+        {activeSection === 'progress' && (
+          <ProgressPage
+            roadmap={roadmap}
+            overallProgress={overallProgress}
+            getYearProgress={getYearProgress}
+            getGoalProgress={getGoalProgress}
+            getMilestoneProgress={getMilestoneProgress}
+            toggleMilestone={toggleMilestone}
+            updateRoadmapTaskStatus={updateRoadmapTaskStatus}
+          />
+        )}
       </main>
     </>
   );
