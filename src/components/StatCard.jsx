@@ -1,6 +1,6 @@
-function StatCard({ label, value }) {
+function StatCard({ label, value, tone }) {
   return (
-    <article className="stat">
+    <article className={`stat ${tone ? `stat-${tone}` : ''}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </article>
