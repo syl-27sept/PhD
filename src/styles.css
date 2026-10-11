@@ -275,7 +275,6 @@ h3 {
 }
 
 .task-date {
-  margin-top: 7px;
   color: var(--color-blue-ink);
   background: var(--color-blue);
 }
@@ -288,6 +287,17 @@ h3 {
 
 .dashboard-tasks-card .list-item {
   padding: 13px 0;
+}
+
+.dashboard-tasks-card .list-item > strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.dashboard-tasks-card .task-date,
+.dashboard-tasks-card .no-date {
+  display: flex;
+  margin-top: 0;
 }
 
 .dashboard-page .text-button {
